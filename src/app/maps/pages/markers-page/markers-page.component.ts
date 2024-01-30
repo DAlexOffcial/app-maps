@@ -1,5 +1,6 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { LngLat, Map, Marker } from 'mapbox-gl';
+import { MapBoxService } from '../../service/map-box.service';
 
 interface MarkerAndColor {
   color: string,
@@ -19,7 +20,78 @@ export class MarkersPageComponent {
 
   public markers: MarkerAndColor[] = []
   public map!: Map;
-  public LngLat: LngLat = new LngLat(-103.37851677182172, 20.71749179174745)
+  public LngLat: LngLat = new LngLat(2.2945, 48.8584)
+  isRotating: boolean = false;
+
+  private _mabBoxService = inject(MapBoxService)
+
+  addresses: string[] = []
+
+  selectrdAddress = ''
+
+  mapbox_id: string = ''
+
+  animationFrameId: number = 0;
+
+  plainMarkers: PlainMarker[] = [
+    { color: "#830fa9", lngLat: [-103.433149480852, 20.63779985475925] },
+    { color: "#5346da", lngLat: [-103.35221461124456, 20.65630444948806] },
+    { color: "#d22ad0", lngLat: [-103.43184839013702, 20.683547191660807] },
+    { color: "#f76819", lngLat: [-103.3509927876803, 20.694796489724368] },
+    { color: "#ce4fe2", lngLat: [-94.07478419448307, 42.47861279287264] },
+    { color: "#16904d", lngLat: [-94.17177284241916, 42.50698111759888] },
+    { color: "#cea7e7", lngLat: [-87.62615011527669, 41.88810354929922] },
+    { color: "#d19cfb", lngLat: [2.2943984481244684, 48.85835066619654] },
+    { color: "#b7fdd4", lngLat: [2.3058746069374934, 48.851481116354506] },
+    { color: "#545772", lngLat: [-103.45479119300752, 20.56951661081868] },
+  ]
+
+  search(event: Event | string) {
+    let searchTerm: string;
+
+    if (typeof event === 'string') {
+      searchTerm = event;
+    } else {
+      searchTerm = (event.target as HTMLInputElement).value;
+    }
+
+    if (searchTerm && searchTerm.length > 0) {
+      searchTerm = searchTerm.replace(' ', '+');
+
+      this._mabBoxService.searchWord(searchTerm).subscribe(data => {
+        this.mapbox_id = data.suggestions[0].mapbox_id;
+        this.addresses = data.suggestions.map(suggestion => suggestion.name);
+        console.log(this.mapbox_id);
+
+
+      });
+    }
+  }
+
+  onSelect(address: Event) {
+    const selectedAddress = (address.target as HTMLLIElement).innerText.trim();
+    this.selectrdAddress = selectedAddress
+    console.log(selectedAddress);
+
+    this.search(selectedAddress);
+
+  }
+
+
+  flyToPlace() {
+    this._mabBoxService.getCoordinates(this.mapbox_id).subscribe(data => {
+      const lat = data.features[0].properties.coordinates.latitude
+      const log = data.features[0].properties.coordinates.longitude
+      console.log(lat, log);
+
+      this.map?.flyTo({
+        zoom: 19,
+        center: [log, lat]
+      })
+    })
+  }
+
+
 
   @ViewChild('map') divMap?: ElementRef;
 
@@ -29,9 +101,10 @@ export class MarkersPageComponent {
 
     this.map = new Map({
       container: this.divMap.nativeElement, // container ID
-      style: 'mapbox://styles/mapbox/light-v11', // style URL
+      style: 'mapbox://styles/mapbox/standard', // style URL
       center: this.LngLat, // starting position [lng, lat]
-      zoom: 13, // starting zoom
+      zoom: 17, // starting zoom
+      pitch: 45
     });
 
     this.map.on('style.load', () => {
@@ -56,7 +129,7 @@ export class MarkersPageComponent {
           this.map.removeLayer(layer.id);
         }
       }
-      
+
       this.map.addLayer({
         'id': '3d-buildings',
         'source': 'composite',
@@ -66,7 +139,6 @@ export class MarkersPageComponent {
         'minzoom': 15,
         'paint': {
           'fill-extrusion-color': '#aaa',
-
           // use an 'interpolate' expression to add a smooth transition effect to the
           // buildings as the user zooms in
           'fill-extrusion-height': [
@@ -139,8 +211,6 @@ export class MarkersPageComponent {
   }
 
   saveToLocalStorage() {
-    console.log(this.markers);
-
     const plainMarkers: PlainMarker[] = this.markers.map(({ color, marker }) => {
       return {
         color,
@@ -154,13 +224,34 @@ export class MarkersPageComponent {
 
   readFromLocalStorage() {
     const plainMarkersString = localStorage.getItem('plainMarkers') ?? '[]'
-    const plainMarkers: PlainMarker[] = JSON.parse(plainMarkersString)
+    this.plainMarkers = JSON.parse(plainMarkersString)
 
-    plainMarkers.forEach(({ color, lngLat }) => {
+    this.plainMarkers.forEach(({ color, lngLat }) => {
       const [lng, lat] = lngLat
       const coords = new LngLat(lng, lat)
 
       this.addMartek(coords, color)
     })
   }
+
+  rotateCamera(timestamp: number): void {
+    const rotationSpeed = 0.5;  // Ajusta este valor según tu preferencia
+
+    if (this.isRotating) {
+      this.map.rotateTo((timestamp * rotationSpeed) % 360, { duration: 0 });
+      this.animationFrameId = requestAnimationFrame(() => this.rotateCamera(timestamp + 1));
+    }
+  }
+
+  startRotation(): void {
+    this.isRotating = true;
+    this.rotateCamera(0);
+  }
+
+  stopRotation(): void {
+    this.isRotating = false;
+    cancelAnimationFrame(this.animationFrameId);
+  }
+
+
 }

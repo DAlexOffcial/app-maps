@@ -1,16 +1,41 @@
 <div id="map" #map></div>
 
 <ul class="list-group">
-    <li *ngFor="let marker of markers; let i = index" 
-    class="list-group-item"
-    [ngStyle]="{ backgroundColor:marker.color }"
-    (dblclick)="deleteMarket(i)"
-    (click)="flyTo(marker.marker)"
-    >
-       Marker {{ i + 1 }}
-    </li>
+  <li *ngFor="let marker of markers; let i = index" class="list-group-item" [ngStyle]="{ backgroundColor:marker.color }"
+    (dblclick)="deleteMarket(i)" (click)="flyTo(marker.marker)">
+    Marker {{ i + 1 }}
+  </li>
 </ul>
 
 <button (click)="createMarket()" class="btn btn-primary">
-    + Agregar marcador
+  + Agregar marcador
 </button>
+
+
+<div class="ver d-flex flex-column position-fixed top-0 start-50 translate-middle-x mt-3 my-custom-container" style="width: 20%;">
+  <!-- Barra de búsqueda con clases de Bootstrap -->
+  <input type="text" class="form-control" debounce="500" (keyup)="search($event)" [(ngModel)]="selectrdAddress" placeholder="Buscar">
+</div>
+
+<div class="ver d-flex flex-column position-fixed top-0 start-50 translate-middle-x  my-custom-container" style="min-width: 20%; margin-top: 40px;" >
+
+  <!-- Lista de direcciones con clases de Bootstrap y margen superior -->
+  <div>
+    <ul style="width: 100%;" class="list-group">
+      <li style="margin-left: 10% !important;" class="list-group-item" *ngFor="let address of addresses" (click)="onSelect($event)">
+        {{ address }}
+      </li>
+    </ul>
+  </div>
+  
+  
+</div>
+
+<button class="btn btn-primary top-0 mt-3" style="max-height: 40px; max-width: 80px; left: 60%;" (click)="flyToPlace()" > ir</button>
+<button class="btn btn-primary bottom-0 mb-3" style="max-height: 40px; max-width: 80px; left: 56%;" (click)="startRotation()" > start</button>
+<button class="btn btn-primary bottom-0 mb-3" style="max-height: 40px; max-width: 80px; left: 50%;" (click)="stopRotation()" > stop</button>
+
+
+
+
+

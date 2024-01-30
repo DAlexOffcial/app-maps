@@ -13,7 +13,9 @@ import { FullScreenPageComponent } from './pages/full-screen-page/full-screen-pa
 import { MarkersPageComponent } from './pages/markers-page/markers-page.component';
 import { PropertiesPageComponent } from './pages/properties-page/properties-page.component';
 import { ZoomRangePageComponent } from './pages/zoom-range-page/zoom-range-page.component';
-
+import { HttpClientModule } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { MapBoxService } from './service/map-box.service';
 
 @NgModule({
   declarations: [
@@ -24,11 +26,15 @@ import { ZoomRangePageComponent } from './pages/zoom-range-page/zoom-range-page.
     MarkersPageComponent,
     PropertiesPageComponent,
     ZoomRangePageComponent,
-
   ],
   imports: [
     CommonModule,
-    MapsRoutingModule
+    MapsRoutingModule,
+    HttpClientModule,
+    FormsModule
+  ],
+  providers: [
+    MapBoxService
   ]
 })
 export class MapsModule { }

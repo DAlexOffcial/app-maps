@@ -15,3 +15,9 @@ button{
     right: 20px;
     cursor: pointer;
 }
+.ver{
+    cursor: pointer;
+}
+.my-custom-container {
+    transform: translate(-50%, 0);
+  }
